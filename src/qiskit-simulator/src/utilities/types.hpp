@@ -290,9 +290,9 @@ template <typename T> void to_json(json_t &js, const std::map<uint_t, T> &map);
 template <typename T> void to_json(json_t &js, const matrix<T> &mat);
 
 /**
- * Convert a matrix to JSON. This returns a list of list.
- * @param js a json_t object to cconvert.
- * @param mat a matrix to to contain result.
+ * Convert a JSON (list of list) to a matrix.
+ * @param js a json_t object to convert.
+ * @param mat a matrix to contain result.
  */
 template <typename T> void from_json(const json_t &js, matrix<T> &mat);
 
@@ -392,7 +392,9 @@ json_t JSON::load(std::string name) {
     std::cin >> js;
   else { // Load from file
     std::ifstream ifile;
-    ifile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    // The following line has been put in a comment because it causes an error:
+    // ERROR: Invalid input (basic_ios::clear)
+    //ifile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
     try {
       ifile.open(name);
     } catch (std::system_error &e) {
