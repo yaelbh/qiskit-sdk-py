@@ -79,6 +79,19 @@ def deep_collect_files(dir_name, files):
         deep_collect_files(d, files)
 
 
+def compare_run_time(elapsed1, elapsed2, exe1, exe2):
+    faster = None
+    if elapsed2 > 2*elapsed1:
+        faster = exe1
+    elif elapsed2 > 2*elapsed1:
+        faster = exe2
+
+    if faster is not None:
+        print('** Note: ' + faster + ' is faster')
+        print(exe1 + ' run time: ' + str(elapsed1))
+        print(exe2 + ' run time: ' + str(elapsed2))
+
+
 if __name__=='__main__':
 
     parser = serv.parse(description = 'Run all simulator tests')     
@@ -108,27 +121,26 @@ if __name__=='__main__':
             start_time = time.time()
             sp.run([f, '--seed', str(local_seed), '--executable', args.reference_executable])
             reference_elapsed = (time.time() - start_time)
-
-            faster = None
-            if reference_elapsed > 2*elapsed:
-                faster = args.executable
-            elif elapsed > 2*reference_elapsed:
-                faster = args.reference_executable
-
-            if faster is not None:
-                print('** Note: ' + faster + ' is faster')
-                print(args.executable + ' run time: ' + str(elapsed))
-                print(args.reference_executable + ' run time: ' + str(reference_elapsed))
-
-
+            compare_run_time(elapsed, reference_elapsed, args.executable, args.reference_executable)
+            
 
     for f in files['json']:
         print(f)
 
-        reference_output = None
-        output = sp.check_output([args.executable, f]).decode()
         if args.reference_executable is not None:
+            print('Running ' + args.executable)
+
+        start_time = time.time()
+        output = sp.check_output([args.executable, f]).decode()
+        elapsed = (time.time() - start_time)
+
+        reference_output = None
+        if args.reference_executable is not None:
+            start_time = time.time()
             reference_output = sp.check_output([args.reference_executable, f]).decode()
+            reference_elapsed = (time.time() - start_time)
+            compare_run_time(elapsed, reference_elapsed, args.executable, args.reference_executable)
+            
         else:
             ref_file = f[:-5] + '.ref'
 
@@ -154,25 +166,7 @@ if __name__=='__main__':
                                not ref_output_lines[i].lstrip().startswith('"time_taken"'):
                             print('** Note: reference output is different')
                             break
-                        else:
-                            main_time = float(re.findall('[\d\.]+', output_lines[i])[0])
-                            ref_time = float(re.findall('[\d\.]+', ref_output_lines[i])[0])
-
-                            faster = None
-                            if args.reference_executable is None:
-                                ref_name = 'Reference'
-                            else:
-                                ref_name = args.reference_executable
-                            
-                            if ref_time > 4*main_time:
-                                faster = args.executable
-                            elif main_time > 4*ref_time:
-                                faster = ref_name
-
-                            if faster is not None:
-                                print('** Note: ' + faster + ' is faster for circuit no. ' + str(i))
-                                print(args.executable + ' run time: ' + str(main_time))
-                                print(ref_name + ' run time: ' + str(ref_time))
+                        
 
 
         
